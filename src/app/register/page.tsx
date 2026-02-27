@@ -34,10 +34,15 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await registerUser({ name, email, password, wardId });
+      const result = await registerUser({ name, email, password, wardId });
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
       router.push("/login?registered=true");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+    } catch {
+      setError("Registration failed");
       setLoading(false);
     }
   }

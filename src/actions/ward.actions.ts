@@ -12,41 +12,55 @@ async function requireAdmin() {
   return session;
 }
 
-export async function createWard(name: string) {
+export async function createWard(name: string): Promise<{ error?: string }> {
   await requireAdmin();
-  if (!name.trim()) throw new Error("Ward name is required");
+  if (!name.trim()) return { error: "Ward name is required" };
 
-  const ward = await db.ward.create({ data: { name: name.trim() } });
+  try {
+    await db.ward.create({ data: { name: name.trim() } });
+  } catch {
+    return { error: "Ward name may already exist" };
+  }
   revalidatePath("/admin/wards");
   revalidatePath("/register");
-  return ward;
+  return {};
 }
 
-export async function updateWard(id: string, name: string) {
+export async function updateWard(id: string, name: string): Promise<{ error?: string }> {
   await requireAdmin();
-  if (!name.trim()) throw new Error("Ward name is required");
+  if (!name.trim()) return { error: "Ward name is required" };
 
-  const ward = await db.ward.update({
-    where: { id },
-    data: { name: name.trim() },
-  });
+  try {
+    await db.ward.update({
+      where: { id },
+      data: { name: name.trim() },
+    });
+  } catch {
+    return { error: "Ward name may already exist" };
+  }
   revalidatePath("/admin/wards");
-  return ward;
+  return {};
 }
 
-export async function deleteWard(id: string) {
+export async function deleteWard(id: string): Promise<{ error?: string }> {
   await requireAdmin();
 
   const userCount = await db.user.count({ where: { wardId: id } });
   if (userCount > 0) {
-    throw new Error("Cannot delete ward with registered citizens");
+    return { error: "Cannot delete ward with registered citizens" };
   }
 
   const issueCount = await db.issue.count({ where: { wardId: id } });
   if (issueCount > 0) {
-    throw new Error("Cannot delete ward with existing issues");
+    return { error: "Cannot delete ward with existing issues" };
   }
 
-  await db.ward.delete({ where: { id } });
+  try {
+    await db.ward.delete({ where: { id } });
+  } catch {
+    return { error: "Failed to delete ward — it may still have linked data" };
+  }
+
   revalidatePath("/admin/wards");
+  return {};
 }

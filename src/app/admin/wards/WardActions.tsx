@@ -10,9 +10,10 @@ interface Props {
   wardId?: string;
   wardName?: string;
   hasCitizens?: boolean;
+  hasIssues?: boolean;
 }
 
-export default function WardActions({ mode, wardId, wardName, hasCitizens }: Props) {
+export default function WardActions({ mode, wardId, wardName, hasCitizens, hasIssues }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(wardName || "");
@@ -24,12 +25,16 @@ export default function WardActions({ mode, wardId, wardName, hasCitizens }: Pro
     setLoading(true);
     setError("");
     try {
-      await createWard(name);
-      setName("");
-      setOpen(false);
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed");
+      const result = await createWard(name);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setName("");
+        setOpen(false);
+        router.refresh();
+      }
+    } catch {
+      setError("Failed to create ward");
     } finally {
       setLoading(false);
     }
@@ -40,11 +45,15 @@ export default function WardActions({ mode, wardId, wardName, hasCitizens }: Pro
     setLoading(true);
     setError("");
     try {
-      await updateWard(wardId, name);
-      setOpen(false);
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed");
+      const result = await updateWard(wardId, name);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setOpen(false);
+        router.refresh();
+      }
+    } catch {
+      setError("Failed to update ward");
     } finally {
       setLoading(false);
     }
@@ -55,11 +64,15 @@ export default function WardActions({ mode, wardId, wardName, hasCitizens }: Pro
     setLoading(true);
     setError("");
     try {
-      await deleteWard(wardId);
-      setOpen(false);
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed");
+      const result = await deleteWard(wardId);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setOpen(false);
+        router.refresh();
+      }
+    } catch {
+      setError("Failed to delete ward");
     } finally {
       setLoading(false);
     }
@@ -138,9 +151,9 @@ export default function WardActions({ mode, wardId, wardName, hasCitizens }: Pro
     <>
       <button
         onClick={() => setOpen(true)}
-        disabled={hasCitizens}
+        disabled={hasCitizens || hasIssues}
         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        title={hasCitizens ? "Cannot delete ward with citizens" : "Delete ward"}
+        title={hasCitizens ? "Cannot delete ward with citizens" : hasIssues ? "Cannot delete ward with issues" : "Delete ward"}
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>

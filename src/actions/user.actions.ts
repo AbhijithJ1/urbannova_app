@@ -9,24 +9,28 @@ export async function registerUser(data: {
   email: string;
   password: string;
   wardId: string;
-}) {
+}): Promise<{ error?: string }> {
   const existing = await db.user.findUnique({ where: { email: data.email } });
-  if (existing) throw new Error("Email already registered");
+  if (existing) return { error: "Email already registered" };
 
   const ward = await db.ward.findUnique({ where: { id: data.wardId } });
-  if (!ward) throw new Error("Invalid ward selected");
+  if (!ward) return { error: "Invalid ward selected" };
 
   const passwordHash = await bcrypt.hash(data.password, 12);
 
-  const user = await db.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      passwordHash,
-      role: Role.USER,
-      wardId: data.wardId,
-    },
-  });
+  try {
+    await db.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        passwordHash,
+        role: Role.USER,
+        wardId: data.wardId,
+      },
+    });
+  } catch {
+    return { error: "Registration failed. Please try again." };
+  }
 
-  return { id: user.id, name: user.name, email: user.email };
+  return {};
 }

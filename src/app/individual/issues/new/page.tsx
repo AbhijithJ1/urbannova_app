@@ -33,17 +33,22 @@ export default function NewIssuePage() {
     setLoading(true);
 
     try {
-      await createIssue({
+      const result = await createIssue({
         title,
         description,
         landmark,
         label: label as "WASTE" | "WATER" | "ENERGY" | "POLLUTION",
         score,
       });
+      if (result.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
+      }
       router.push("/individual/issues");
       router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create issue");
+    } catch {
+      setError("Failed to create issue");
       setLoading(false);
     }
   }

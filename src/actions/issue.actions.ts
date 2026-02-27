@@ -11,70 +11,78 @@ export async function createIssue(data: {
   landmark: string;
   label: IssueLabel;
   score: number;
-}) {
+}): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session || session.user.role !== "USER") throw new Error("Unauthorized");
-  if (!session.user.wardId) throw new Error("No ward assigned");
+  if (!session || session.user.role !== "USER") return { error: "Unauthorized" };
+  if (!session.user.wardId) return { error: "No ward assigned" };
 
-  if (data.score < 1 || data.score > 100) throw new Error("Score must be 1–100");
+  if (data.score < 1 || data.score > 100) return { error: "Score must be 1–100" };
 
-  const issue = await db.issue.create({
-    data: {
-      title: data.title.trim(),
-      description: data.description.trim(),
-      landmark: data.landmark.trim(),
-      label: data.label,
-      score: data.score,
-      status: IssueStatus.OPEN,
-      wardId: session.user.wardId,
-      userId: session.user.id,
-    },
-  });
+  try {
+    const issue = await db.issue.create({
+      data: {
+        title: data.title.trim(),
+        description: data.description.trim(),
+        landmark: data.landmark.trim(),
+        label: data.label,
+        score: data.score,
+        status: IssueStatus.OPEN,
+        wardId: session.user.wardId,
+        userId: session.user.id,
+      },
+    });
 
-  // Create initial status log
-  await db.issueStatusLog.create({
-    data: {
-      issueId: issue.id,
-      status: IssueStatus.OPEN,
-      changedById: session.user.id,
-    },
-  });
+    // Create initial status log
+    await db.issueStatusLog.create({
+      data: {
+        issueId: issue.id,
+        status: IssueStatus.OPEN,
+        changedById: session.user.id,
+      },
+    });
+  } catch {
+    return { error: "Failed to create issue" };
+  }
 
   revalidatePath("/individual/issues");
   revalidatePath("/individual/dashboard");
-  return issue;
+  return {};
 }
 
 export async function updateIssueStatus(
   issueId: string,
   status: IssueStatus,
   blockReason?: string
-) {
+): Promise<{ error?: string }> {
   const session = await auth();
-  if (!session || session.user.role !== "ADMIN") throw new Error("Unauthorized");
+  if (!session || session.user.role !== "ADMIN") return { error: "Unauthorized" };
 
   if (status === IssueStatus.BLOCKED && !blockReason?.trim()) {
-    throw new Error("Block reason is required");
+    return { error: "Block reason is required" };
   }
 
-  const issue = await db.issue.update({
-    where: { id: issueId },
-    data: {
-      status,
-      blockReason: status === IssueStatus.BLOCKED ? blockReason?.trim() : null,
-    },
-  });
+  try {
+    await db.issue.update({
+      where: { id: issueId },
+      data: {
+        status,
+        blockReason: status === IssueStatus.BLOCKED ? blockReason?.trim() : null,
+      },
+    });
 
-  await db.issueStatusLog.create({
-    data: {
-      issueId,
-      status,
-      blockReason: status === IssueStatus.BLOCKED ? blockReason?.trim() : null,
-      changedById: session.user.id,
-    },
-  });
+    await db.issueStatusLog.create({
+      data: {
+        issueId,
+        status,
+        blockReason: status === IssueStatus.BLOCKED ? blockReason?.trim() : null,
+        changedById: session.user.id,
+      },
+    });
+  } catch {
+    return { error: "Failed to update issue status" };
+  }
 
   revalidatePath("/admin/issues");
   revalidatePath(`/individual/issues/${issueId}`);
-  return issue;
+  return {};
 }

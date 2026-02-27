@@ -91,7 +91,7 @@ export default async function AdminWardsPage() {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <WardActions mode="edit" wardId={w.id} wardName={w.name} />
-                      <WardActions mode="delete" wardId={w.id} wardName={w.name} hasCitizens={w.citizenCount > 0} />
+                      <WardActions mode="delete" wardId={w.id} wardName={w.name} hasCitizens={w.citizenCount > 0} hasIssues={w.issueCount > 0} />
                     </div>
                   </td>
                 </tr>

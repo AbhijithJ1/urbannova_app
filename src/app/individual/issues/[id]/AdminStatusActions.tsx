@@ -25,8 +25,12 @@ export default function AdminStatusActions({
     }
     setLoading(true);
     try {
-      await updateIssueStatus(issueId, status);
-      router.refresh();
+      const result = await updateIssueStatus(issueId, status);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        router.refresh();
+      }
     } catch {
       alert("Failed to update status");
     } finally {
@@ -38,9 +42,13 @@ export default function AdminStatusActions({
     if (!blockReason.trim()) return;
     setLoading(true);
     try {
-      await updateIssueStatus(issueId, "BLOCKED", blockReason);
-      setShowBlockModal(false);
-      router.refresh();
+      const result = await updateIssueStatus(issueId, "BLOCKED", blockReason);
+      if (result.error) {
+        alert(result.error);
+      } else {
+        setShowBlockModal(false);
+        router.refresh();
+      }
     } catch {
       alert("Failed to block issue");
     } finally {
