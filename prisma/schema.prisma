@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum IssueLabel {
+  WASTE
+  WATER
+  ENERGY
+  POLLUTION
+}
+
+enum IssueStatus {
+  OPEN
+  INPROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+model Ward {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+  issues    Issue[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  wardId       String?
+  ward         Ward?    @relation(fields: [wardId], references: [id])
+  createdAt    DateTime @default(now())
+  issues       Issue[]
+  statusLogs   IssueStatusLog[]
+}
+
+model Issue {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  landmark    String
+  label       IssueLabel
+  score       Int
+  status      IssueStatus @default(OPEN)
+  blockReason String?
+  wardId      String
+  ward        Ward        @relation(fields: [wardId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  statusLogs  IssueStatusLog[]
+}
+
+model IssueStatusLog {
+  id          String      @id @default(cuid())
+  issueId     String
+  issue       Issue       @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  status      IssueStatus
+  blockReason String?
+  changedById String
+  changedBy   User        @relation(fields: [changedById], references: [id])
+  changedAt   DateTime    @default(now())
+}
