@@ -314,14 +314,14 @@ export default function LandingContent() {
                 border: "hover:border-orange-200",
                 img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80",
               },
-              {
+             {
                 icon: Droplets,
                 label: "Water",
                 desc: "Leakage, shortage, sewage overflow, contamination",
                 color: "text-blue-600",
                 bg: "bg-blue-50",
                 border: "hover:border-blue-200",
-                img: "https://images.unsplash.com/photo-1541252260730-0412e8e2108e?w=600&q=80",
+                img: "/water-leakage.webp",
               },
               {
                 icon: Zap,
